@@ -1,0 +1,134 @@
+services:
+  # ---------------------------
+  # MongoDB (raw data storage)
+  # ---------------------------
+  mongo:
+    image: mongo:6.0
+    container_name: mongo
+    restart: always
+    ports:
+      - "27020:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: airflow
+      MONGO_INITDB_ROOT_PASSWORD: airflow123
+      MONGO_INITDB_DATABASE: air_quality_db
+    volumes:
+      - ./storage/mongo_init.js:/docker-entrypoint-initdb.d/mongo_init.js:ro
+      - mongo_data:/data/db
+    networks:
+      - air_quality_net
+
+  # ---------------------------
+  # Zookeeper (Kafka dependency)
+  # ---------------------------
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.1
+    container_name: zookeeper
+    restart: always
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    networks:
+      - airnet
+
+  # ---------------------------
+  # Kafka Broker
+  # ---------------------------
+  kafka:
+    image: confluentinc/cp-kafka:7.6.1
+    container_name: kafka
+    restart: always
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    networks:
+      - airnet
+
+
+  # ---------------------------
+  # Kafka UI (for inspection)
+  # ---------------------------
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
+    restart: always
+    ports:
+      - "8083:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+    depends_on:
+      - kafka
+    networks:
+      - airnet
+
+  # ---------------------------
+  # MongoDB Kafka Connector
+  # ---------------------------
+  mongo-connector:
+    image: debezium/connect:2.6
+    container_name: mongo-connector
+    restart: always
+    depends_on:
+      - kafka
+      - mongo
+    ports:
+      - "8084:8083"
+    environment:
+      BOOTSTRAP_SERVERS: kafka:9092
+      GROUP_ID: "connect-cluster"
+      CONFIG_STORAGE_TOPIC: connect-configs
+      OFFSET_STORAGE_TOPIC: connect-offsets
+      STATUS_STORAGE_TOPIC: connect-status
+      KEY_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      VALUE_CONVERTER: org.apache.kafka.connect.json.JsonConverter
+      CONNECTORS_PATH: /etc/kafka-connect/connectors
+      CONNECT_PLUGIN_PATH: /kafka/connect,/kafka/connect/debezium-connector-mongodb
+    volumes:
+      - ./streaming/mongo_connector_config.json:/etc/kafka-connect/connectors/mongo_connector_config.json:ro
+    networks:
+      - airnet
+
+  # ---------------------------
+  # Cassandra (analytics sink)
+  # ---------------------------
+  cassandra:
+    image: cassandra:4.1
+    container_name: cassandra
+    restart: always
+    ports:
+      - "9042:9042"
+    environment:
+      CASSANDRA_CLUSTER_NAME: "air_quality_cluster"
+      CASSANDRA_START_RPC: "true"
+      CASSANDRA_ENDPOINT_SNITCH: GossipingPropertyFileSnitch
+    volumes:
+      - cassandra_data:/var/lib/cassandra
+      - ./storage/cassandra_setup.cql:/docker-entrypoint-initdb.d/cassandra_setup.cql:ro
+    networks:
+      - air_quality_net
+
+# ---------------------------
+# Volumes and network
+# ---------------------------
+volumes:
+  mongo_data:
+  cassandra_data:
+
+networks:
+  air_quality_net:
+    driver: bridge
+  airnet:
+    driver: bridge
+
+

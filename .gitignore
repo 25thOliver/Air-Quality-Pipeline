@@ -1,0 +1,88 @@
+# ---------------------------
+# Python
+# ---------------------------
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.py.class
+*.egg-info/
+*.egg
+*.log
+
+# Virtual environments
+.env
+.venv/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Jupyter notebooks checkpoints
+.ipynb_checkpoints/
+
+# ---------------------------
+# Docker & Data Volumes
+# ---------------------------
+# Local Docker data mounts
+mongo_data/
+cassandra_data/
+kafka_data/
+zookeeper_data/
+connect_data/
+
+# Docker files generated at runtime
+**/.DS_Store
+**/Thumbs.db
+*.pid
+*.sock
+
+# Ignore container logs and temp files
+logs/
+*.log
+*.out
+*.tmp
+
+# ---------------------------
+# Configuration & Secrets
+# ---------------------------
+# Environment files
+.env
+.env.*
+
+# Any credentials or connection configs
+**/mongo_connector_config.json
+**/mongo_init.js
+**/cassandra_setup.cql
+
+# ---------------------------
+# IDE / Editor files
+# ---------------------------
+.vscode/
+.idea/
+*.swp
+*.swo
+*.bak
+*.tmp
+
+# ---------------------------
+# System files
+# ---------------------------
+.DS_Store
+Thumbs.db
+
+# ---------------------------
+# Bytecode cache & build
+# ---------------------------
+build/
+dist/
+*.spec
+
+# ---------------------------
+# Misc
+# ---------------------------
+# Ignore generated documentation or reports
+*.html
+*.pdf
+*.csv
+*.json
