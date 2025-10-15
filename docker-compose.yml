@@ -54,6 +54,21 @@ services:
     networks:
       - airnet
 
+  # ---------------------------
+  # Kafka Producer (Air Quality Ingestion)
+  # ---------------------------
+  producer:
+    build:
+      context: .
+      dockerfile: ingestion/Dockerfile
+    container_name: producer
+    restart: always
+    depends_on:
+      - kafka
+    env_file:
+      - .env
+    networks:
+      - airnet
 
   # ---------------------------
   # Kafka UI (for inspection)
@@ -130,5 +145,3 @@ networks:
     driver: bridge
   airnet:
     driver: bridge
-
-
