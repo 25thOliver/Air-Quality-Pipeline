@@ -31,7 +31,7 @@ services:
     ports:
       - "2181:2181"
     networks:
-      - airnet
+      - air_quality_net
 
   # ---------------------------
   # Kafka Broker
@@ -52,7 +52,7 @@ services:
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
     networks:
-      - airnet
+      - air_quality_net
 
   # ---------------------------
   # Kafka Producer (Air Quality Ingestion)
@@ -68,7 +68,26 @@ services:
     env_file:
       - .env
     networks:
-      - airnet
+      - air_quality_net
+
+  # ---------------------------
+  # Kafka Consumer (MongoDB Writer)
+  # ---------------------------
+  consumer:
+    build:
+      context: .
+      dockerfile: ingestion/Dockerfile
+    container_name: consumer
+    restart: always
+    depends_on:
+      - kafka
+      - mongo
+    env_file:
+      - .env
+    command: ["python3", "ingestion/consumer.py"]
+    networks:
+      - air_quality_net
+
 
   # ---------------------------
   # Kafka UI (for inspection)
@@ -85,7 +104,7 @@ services:
     depends_on:
       - kafka
     networks:
-      - airnet
+      - air_quality_net
 
   # ---------------------------
   # MongoDB Kafka Connector
@@ -112,7 +131,7 @@ services:
     volumes:
       - ./streaming/mongo_connector_config.json:/etc/kafka-connect/connectors/mongo_connector_config.json:ro
     networks:
-      - airnet
+      - air_quality_net
 
   # ---------------------------
   # Cassandra (analytics sink)
@@ -143,5 +162,4 @@ volumes:
 networks:
   air_quality_net:
     driver: bridge
-  airnet:
-    driver: bridge
+
