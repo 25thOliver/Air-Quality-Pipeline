@@ -55,7 +55,7 @@ def connect_kafka():
                 auto_offset_reset='earliest',
                 enable_auto_commit=True,
                 group_id="cassandra_consumer_group",
-                value_desrializer=lambda x: json.loads(x.decode("utf-8")),
+                value_deserializer=lambda x: json.loads(x.decode("utf-8")),
             )
             logger.info(f"Connected to Kafka broker at {kafka_broker}")
             logger.info(f"Subscribed to CDC topic: {cdc_topic}")
