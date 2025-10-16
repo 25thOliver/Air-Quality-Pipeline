@@ -50,6 +50,9 @@ logs/
 .env
 .env.*
 
+# MongoDB keyfile (security credential)
+mongo-keyfile
+
 # Any credentials or connection configs
 **/mongo_connector_config.json
 **/mongo_init.js
