@@ -172,6 +172,25 @@ services:
     networks:
       - air_quality_net
 
+  # ---------------------------
+  # Cassandra Consumer (CDC to Cassandra)
+  # ---------------------------
+  cassandra-consumer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cassandra-consumer
+    restart: always
+    depends_on:
+      - kafka
+      - cassandra
+      - mongo-connector
+    env_file:
+      - .env
+    command: ["python3", "streaming/kafka_consumer.py"]
+    networks:
+      - air_quality_net
+
 # ---------------------------
 # Volumes and network
 # ---------------------------
