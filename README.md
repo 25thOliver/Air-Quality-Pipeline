@@ -4,7 +4,7 @@ A complete end-to-end data engineering project that monitors air quality in real
 
 ---
 
-## 📋 Table of Contents
+## Table of Contents
 
 1. [Project Overview](#project-overview)
 2. [What Problem Does This Solve?](#what-problem-does-this-solve)
@@ -23,7 +23,7 @@ A complete end-to-end data engineering project that monitors air quality in real
 
 ---
 
-## 🌍 Project Overview
+## Project Overview
 
 This project builds a **real-time data pipeline** that:
 - Collects air quality data (PM2.5, PM10, carbon monoxide, ozone, etc.) for Nairobi and Mombasa
@@ -34,18 +34,18 @@ This project builds a **real-time data pipeline** that:
 
 Think of it like this: Imagine you're monitoring the air quality in your city every hour. This system automatically fetches that information, saves it in multiple places for different purposes, and makes it available for analysis - all happening in real-time without manual intervention.
 
-**🎯 Key Features:**
-- ✅ Fully automated data collection every hour
-- ✅ Real-time data streaming
-- ✅ Automatic change tracking (you know when new data arrives)
-- ✅ Multiple storage systems optimized for different use cases
-- ✅ Built-in monitoring dashboards
-- ✅ Containerized (runs anywhere with Docker)
-- ✅ Production-ready error handling and retry logic
+** Key Features:**
+- Fully automated data collection every hour
+- Real-time data streaming
+- Automatic change tracking (you know when new data arrives)
+- Multiple storage systems optimized for different use cases
+- Built-in monitoring dashboards
+- Containerized (runs anywhere with Docker)
+- Production-ready error handling and retry logic
 
 ---
 
-## 🤔 What Problem Does This Solve?
+## What Problem Does This Solve?
 
 ### The Challenge
 Air quality affects millions of people's health daily. To build applications like:
@@ -66,7 +66,7 @@ This pipeline automates everything:
 
 ---
 
-## 🏗️ Architecture Overview
+## Architecture Overview
 
 Our pipeline follows the **Lambda Architecture** pattern, combining real-time and batch processing capabilities.
 
@@ -132,7 +132,7 @@ Our pipeline follows the **Lambda Architecture** pattern, combining real-time an
 
 ---
 
-## 🛠️ Technologies Used
+## Technologies Used
 
 ### Core Components
 
@@ -156,7 +156,7 @@ Our pipeline follows the **Lambda Architecture** pattern, combining real-time an
 
 ---
 
-## 🔄 How the System Works
+## How the System Works
 
 Let me break down the data flow in simple terms:
 
@@ -173,8 +173,8 @@ Let me break down the data flow in simple terms:
    - Sulphur dioxide
    - Ozone levels
    - UV index
-
-**📸 INSERT SCREENSHOT: Producer logs showing successful data fetch**
+![Producer logs showing succesful data fetch](images/producer_logs.png)
+*Producer logs showing successful data fetch*
 
 ### Step 2: Message Streaming (Kafka)
 The Producer doesn't directly save to a database. Instead, it:
@@ -186,8 +186,8 @@ The Producer doesn't directly save to a database. Instead, it:
 - **Decoupling**: Producer and consumers work independently
 - **Scalability**: Easy to add more consumers
 - **Reliability**: Messages aren't lost if something crashes
-
-**📸 INSERT SCREENSHOT: Kafka UI showing the air_quality_data topic**
+![Kafka UI showing the air_quality_data](images/kafka_ui_msgs.png)
+*Kafka UI showing the air_quality_data topic*
 
 ### Step 3: Raw Data Storage (MongoDB)
 A **Consumer** service:
@@ -228,12 +228,12 @@ Another **Consumer** service:
 - Fast queries for date ranges
 - Can handle massive data volumes
 - Great for dashboards and analytics
-
-**📸 INSERT SCREENSHOT: Cassandra data queried via cqlsh**
+![Cassandra data queried via cqlsh](images/cassandra_query.png)
+*Cassandra data queried via cqlsh*
 
 ---
 
-## ✅ Prerequisites
+## Prerequisites
 
 Before starting, you need:
 
@@ -259,7 +259,7 @@ Before starting, you need:
 
 ---
 
-## 🚀 Installation & Setup
+## Installation & Setup
 
 ### Step 1: Clone the Repository
 
@@ -311,13 +311,6 @@ chmod 400 mongo-keyfile
 sudo chown 999:999 mongo-keyfile
 ```
 
-**On Windows (PowerShell):**
-```powershell
-# Create a random keyfile
-$bytes = New-Object byte[] 756
-(New-Object Security.Cryptography.RNGCryptoServiceProvider).GetBytes($bytes)
-[Convert]::ToBase64String($bytes) | Out-File -FilePath mongo-keyfile -Encoding ASCII
-```
 
 ### Step 4: Start All Services
 
@@ -329,8 +322,8 @@ This command:
 - Downloads all necessary Docker images (first time only)
 - Starts all services in the background
 - Takes 2-5 minutes depending on your internet speed
-
-**📸 INSERT SCREENSHOT: docker-compose up output showing all services starting**
+![docker-compose up output showing all services starting](images/docker_compose_up.png)
+*docker-compose up output showing all services starting*
 
 ### Step 5: Initialize MongoDB Replica Set
 
@@ -341,8 +334,8 @@ docker logs mongo-init
 ```
 
 You should see: `Replica set initialized successfully!`
-
-**📸 INSERT SCREENSHOT: mongo-init logs showing successful initialization**
+![MongoDB Initialization](images/mongo_init_success.png)
+*mongo-init logs showing successful initialization*
 
 ### Step 6: Initialize Cassandra Schema
 
@@ -387,12 +380,12 @@ You should see 10 containers running:
 - mongo-connector
 - cassandra
 - cassandra-consumer
-
-**📸 INSERT SCREENSHOT: docker ps output showing all containers**
+![Docker ps](images/docker_ps.png)
+*docker ps output showing all containers*
 
 ---
 
-## 🧩 Understanding Each Component
+## Understanding Each Component
 
 ### 1. Producer (Data Ingestion)
 
@@ -420,8 +413,8 @@ docker logs -f producer
 2025-10-16 21:51:48 [INFO] Published data for Mombasa at 2025-10-20T23:00
 2025-10-16 21:51:48 [INFO] waiting for the next cycle...
 ```
-
-**📸 INSERT SCREENSHOT: Producer logs**
+![Producer logs](images/producer_logs.png)
+*Producer logs*
 
 ---
 
@@ -469,8 +462,8 @@ docker logs -f consumer
 2025-10-16 21:57:16 [INFO] Inserted record for Nairobi at 2025-10-20T23:00
 2025-10-16 21:57:16 [INFO] Inserted record for Mombasa at 2025-10-20T23:00
 ```
-
-**📸 INSERT SCREENSHOT: Consumer logs**
+![Consumer logs](images/consumer_logs.png)
+*Consumer logs*
 
 ---
 
@@ -506,8 +499,8 @@ docker exec mongo mongosh -u airflow -p airflow123 --authenticationDatabase admi
 docker exec mongo mongosh -u airflow -p airflow123 --authenticationDatabase admin --quiet \
   --eval "db.getSiblingDB('air_quality_db').air_quality_raw.countDocuments()"
 ```
-
-**📸 INSERT SCREENSHOT: MongoDB query results**
+![MongoDB query results](images/mongodb_query.png)
+*MongoDB query results*
 
 ---
 
@@ -559,7 +552,7 @@ docker logs -f cassandra-consumer
 2025-10-16 21:28:47 [INFO] Inserted reading for Nairobi at 2025-10-20 23:00:00
 2025-10-16 21:28:47 [INFO] Inserted reading for Mombasa at 2025-10-20 23:00:00
 ```
-
+![Cassandra consumer logs]()
 **📸 INSERT SCREENSHOT: Cassandra consumer logs**
 
 ---
@@ -590,12 +583,12 @@ docker exec cassandra cqlsh -e "SELECT city, timestamp, pm2_5, pm10, ozone FROM 
 # Query specific city
 docker exec cassandra cqlsh -e "SELECT timestamp, pm2_5, ozone FROM air_quality_analytics.air_quality_readings WHERE city='Nairobi' LIMIT 10;"
 ```
-
-**📸 INSERT SCREENSHOT: Cassandra query results**
+![Cassandra query results](images/query_results.png)
+*Cassandra query results*
 
 ---
 
-## 📊 Monitoring & UI Dashboards
+## Monitoring & UI Dashboards
 
 ### 1. Kafka UI (Monitoring Kafka)
 
@@ -618,10 +611,9 @@ docker exec cassandra cqlsh -e "SELECT timestamp, pm2_5, ozone FROM air_quality_
 - **Messages**: Total messages in each topic
 - **Consumer Groups**: Active consumers and their offsets
 - **Lag**: How far behind consumers are
-
-**📸 INSERT SCREENSHOT: Kafka UI dashboard**
-**📸 INSERT SCREENSHOT: Kafka UI showing air_quality_data topic with messages**
-**📸 INSERT SCREENSHOT: Kafka UI showing consumer groups**
+![Kafka UI dashboard](images/kafka_ui.png)
+![Messages](images/kafka_ui_msgs.png)
+![Consumers](images/kafka_ui_consumers.png)
 
 **Troubleshooting with Kafka UI:**
 - If producer isn't working → Check if `air_quality_data` topic has recent messages
@@ -641,270 +633,7 @@ This is a REST API endpoint. Use it with curl or Postman.
 curl -s http://localhost:8084/connectors/mongo-air-quality-connector/status | python3 -m json.tool
 ```
 
-**Expected healthy output:**
-```json
-{
-    "name": "mongo-air-quality-connector",
-    "connector": {
-        "state": "RUNNING",
-        "worker_id": "172.21.0.7:8083"
-    },
-    "tasks": [
-        {
-            "id": 0,
-            "state": "RUNNING",
-            "worker_id": "172.21.0.7:8083"
-        }
-    ],
-    "type": "source"
-}
-```
 
-**Other useful endpoints:**
-
-List all connectors:
-```bash
-curl -s http://localhost:8084/connectors
-```
-
-Get connector config:
-```bash
-curl -s http://localhost:8084/connectors/mongo-air-quality-connector/config | python3 -m json.tool
-```
-
-Restart a connector:
-```bash
-curl -X POST http://localhost:8084/connectors/mongo-air-quality-connector/restart
-```
-
-Delete a connector:
-```bash
-curl -X DELETE http://localhost:8084/connectors/mongo-air-quality-connector
-```
-
-**📸 INSERT SCREENSHOT: Connector status JSON output**
-
----
-
-### 3. MongoDB (Using MongoDB Compass - Optional)
-
-If you want a GUI for MongoDB:
-
-1. Download [MongoDB Compass](https://www.mongodb.com/products/compass)
-2. Connect using: `mongodb://airflow:airflow123@localhost:27020/air_quality_db?authSource=admin`
-3. Browse the `air_quality_raw` collection
-
-**📸 INSERT SCREENSHOT: MongoDB Compass showing the collection**
-
----
-
-### 4. Container Health Monitoring
-
-**View all containers:**
-```bash
-docker ps
-```
-
-**Check resource usage:**
-```bash
-docker stats
-```
-
-This shows CPU, memory, and network usage for each container.
-
-**📸 INSERT SCREENSHOT: docker stats output**
-
-**View logs for any service:**
-```bash
-# Producer
-docker logs -f producer
-
-# Consumer
-docker logs -f consumer
-
-# Kafka
-docker logs -f kafka
-
-# MongoDB
-docker logs -f mongo
-
-# Cassandra
-docker logs -f cassandra
-
-# Cassandra Consumer
-docker logs -f cassandra-consumer
-```
-
----
-
-## 🔍 Querying the Data
-
-### MongoDB Queries
-
-**Basic Queries:**
-
-```bash
-# Count total documents
-docker exec mongo mongosh -u airflow -p airflow123 --authenticationDatabase admin --quiet \
-  --eval "db.getSiblingDB('air_quality_db').air_quality_raw.countDocuments()"
-
-# Find latest reading for Nairobi
-docker exec mongo mongosh -u airflow -p airflow123 --authenticationDatabase admin --quiet \
-  --eval "db.getSiblingDB('air_quality_db').air_quality_raw.find({city: 'Nairobi'}).sort({_id: -1}).limit(1)"
-
-# Find all readings with high PM2.5 (> 50)
-docker exec mongo mongosh -u airflow -p airflow123 --authenticationDatabase admin --quiet \
-  --eval "db.getSiblingDB('air_quality_db').air_quality_raw.find({pm2_5: {\$gt: 50}})"
-
-# Get average PM2.5 by city
-docker exec mongo mongosh -u airflow -p airflow123 --authenticationDatabase admin --quiet \
-  --eval "db.getSiblingDB('air_quality_db').air_quality_raw.aggregate([{'\$group': {_id: '\$city', avgPM25: {'\$avg': '\$pm2_5'}}}])"
-```
-
----
-
-### Cassandra Queries (CQL)
-
-**Basic Queries:**
-
-```bash
-# Count all readings
-docker exec cassandra cqlsh -e "SELECT COUNT(*) FROM air_quality_analytics.air_quality_readings;"
-
-# Get latest readings for each city
-docker exec cassandra cqlsh -e "SELECT city, timestamp, pm2_5, pm10, ozone FROM air_quality_analytics.air_quality_readings PER PARTITION LIMIT 1;"
-
-# Query Nairobi readings
-docker exec cassandra cqlsh -e "SELECT timestamp, pm2_5, pm10, carbon_monoxide FROM air_quality_analytics.air_quality_readings WHERE city='Nairobi' LIMIT 20;"
-
-# Query Mombasa readings
-docker exec cassandra cqlsh -e "SELECT timestamp, pm2_5, pm10, carbon_monoxide FROM air_quality_analytics.air_quality_readings WHERE city='Mombasa' LIMIT 20;"
-
-# Query specific time range (if you have multiple days of data)
-docker exec cassandra cqlsh -e "SELECT * FROM air_quality_analytics.air_quality_readings WHERE city='Nairobi' AND timestamp >= '2025-10-20' AND timestamp < '2025-10-21';"
-```
-
-**Advanced Analytics (after collecting data for several days):**
-
-```bash
-# Get daily averages (requires daily_air_quality_stats table to be populated)
-docker exec cassandra cqlsh -e "SELECT date, avg_pm2_5, avg_pm10 FROM air_quality_analytics.daily_air_quality_stats WHERE city='Nairobi' LIMIT 7;"
-```
-
-**📸 INSERT SCREENSHOT: Various query results from both databases**
-
----
-
-## 📁 Project Structure
-
-```
-air-quality-pipeline/
-│
-├── ingestion/                      # Data ingestion components
-│   ├── Dockerfile                  # Dockerfile for producer/consumer
-│   ├── producer.py                 # Fetches data from API → Kafka
-│   └── consumer.py                 # Kafka → MongoDB writer
-│
-├── streaming/                      # Streaming components
-│   ├── kafka_consumer.py           # CDC → Cassandra consumer
-│   └── mongo_connector_config.json # Debezium CDC configuration
-│
-├── storage/                        # Database initialization
-│   ├── mongo_init.js               # MongoDB initialization (empty)
-│   ├── cassandra_setup.cql         # Cassandra schema
-│   └── init-replica-set.sh         # MongoDB replica set init script
-│
-├── docker-compose.yml              # Orchestrates all services
-├── Dockerfile                      # Base Python image
-├── requirements.txt                # Python dependencies
-├── .env                            # Environment variables (create this)
-├── .gitignore                      # Git ignore file
-├── mongo-keyfile                   # MongoDB security key (create this)
-└── README.md                       # This file
-```
-
----
-
-## 🐛 Troubleshooting
-
-### Issue 1: Producer Can't Connect to Kafka
-
-**Symptoms:**
-```
-KafkaConnectionError: 111 ECONNREFUSED
-```
-
-**Solutions:**
-1. Check Kafka is running: `docker ps | grep kafka`
-2. Wait 30 seconds for Kafka to fully start
-3. Check `docker-compose.yml` has correct `KAFKA_ADVERTISED_LISTENERS`:
-   ```yaml
-   KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_INTERNAL://kafka:9093
-   ```
-4. Restart producer: `docker-compose restart producer`
-
----
-
-### Issue 2: Consumer Can't Write to MongoDB
-
-**Symptoms:**
-```
-No servers available for writes
-server_type: RSGhost
-```
-
-**Solution:**
-MongoDB replica set not initialized. Run:
-```bash
-docker logs mongo-init
-```
-
-If you see errors, manually initialize:
-```bash
-docker exec mongo mongosh -u airflow -p airflow123 --authenticationDatabase admin --eval "rs.initiate({_id: 'rs0', members: [{_id: 0, host: 'mongo:27017'}]})"
-```
-
----
-
-### Issue 3: Debezium Connector Not Running
-
-**Symptoms:**
-```bash
-curl http://localhost:8084/connectors
-# Returns: []
-```
-
-**Solution:**
-Register the connector:
-```bash
-curl -X POST http://localhost:8084/connectors \
-  -H "Content-Type: application/json" \
-  -d @streaming/mongo_connector_config.json
-```
-
----
-
-### Issue 4: Cassandra Consumer Fails
-
-**Symptoms:**
-```
-Unrecognized configs: {'value_desrializer'}
-```
-
-**Solution:**
-Typo in code. Check `streaming/kafka_consumer.py` line 64:
-```python
-# Wrong:
-value_desrializer=lambda x: json.loads(x.decode("utf-8"))
-
-# Correct:
-value_deserializer=lambda x: json.loads(x.decode("utf-8"))
-```
-
-Fix the typo and rebuild:
-```bash
-docker-compose up -d --build cassandra-consumer
-```
 
 ---
 
@@ -913,80 +642,11 @@ docker-compose up -d --build cassandra-consumer
 **Symptoms:**
 Logs show many inserts but `SELECT COUNT(*)` shows only 2 records.
 
-**Explanation:**
-This is normal! All readings have the same timestamp (hourly data). Cassandra's primary key is `(city, timestamp)`, so:
-- Each city gets only 1 record (the latest)
-- Inserts with same PK are UPSERTs (updates)
-
-**Solution:**
-Wait 1 hour for new timestamp data, or change `FETCH_INTERVAL` to collect historical data.
-
----
-
-### Issue 6: Docker Compose Fails to Start
-
-**Symptoms:**
-```
-ERROR: Couldn't connect to Docker daemon
+*
 ```
 
-**Solutions:**
-1. Start Docker Desktop (Windows/Mac)
-2. Or start Docker service (Linux): `sudo systemctl start docker`
-3. Check Docker is running: `docker ps`
 
----
-
-### Issue 7: Permission Denied on mongo-keyfile
-
-**Symptoms:**
-```
-error: open("mongo-keyfile"): Permission denied
-```
-
-**Solution:**
-```bash
-chmod 400 mongo-keyfile
-sudo chown 999:999 mongo-keyfile
-```
-
----
-
-### General Debugging Commands
-
-**Check all container statuses:**
-```bash
-docker ps -a
-```
-
-**View logs for specific service:**
-```bash
-docker logs <container-name>
-```
-
-**Restart specific service:**
-```bash
-docker-compose restart <service-name>
-```
-
-**Rebuild and restart:**
-```bash
-docker-compose up -d --build <service-name>
-```
-
-**Stop everything:**
-```bash
-docker-compose down
-```
-
-**Stop and remove volumes (CAUTION: deletes all data):**
-```bash
-docker-compose down -v
-```
-
----
-
-## 🚀 Future Enhancements
+## Future Enhancements
 
 This project can be extended in many ways:
 
@@ -1026,138 +686,8 @@ CITIES = {
 - Anomaly detection for unusual pollution spikes
 - Correlation analysis with weather data
 
-### 6. API Development
-- Build REST API to serve data
-- Create endpoints for:
-  - Current air quality by city
-  - Historical data queries
-  - Statistical summaries
-- Add authentication and rate limiting
-
-### 7. Performance Optimization
-- Add Kafka partitioning for better parallelism
-- Implement data retention policies
-- Add caching layer (Redis) for frequent queries
-- Optimize Cassandra queries with materialized views
-
-### 8. High Availability
-- Add multiple Kafka brokers
-- Configure Cassandra cluster (3+ nodes)
-- Implement MongoDB sharding
-- Add load balancer for API
-
 ---
-
-## 🎓 Learning Outcomes
-
-By building and understanding this project, you will learn:
-
-### 1. Data Engineering Fundamentals
-- **ETL/ELT Processes**: Extract, Transform, Load patterns
-- **Data Pipeline Architecture**: Designing robust data flows
-- **Stream Processing**: Real-time vs batch processing
-- **Data Modeling**: Schema design for different databases
-
-### 2. Distributed Systems
-- **Message Queues**: Kafka for decoupled architecture
-- **Pub/Sub Pattern**: Publishers and subscribers
-- **Event-Driven Architecture**: Reacting to data changes
-- **Horizontal Scaling**: Adding more nodes for capacity
-
-### 3. Database Technologies
-
-**MongoDB (Document Store):**
-- Schema-less flexibility
-- Document-oriented design
-- Replica sets for high availability
-- When to use NoSQL
-
-**Cassandra (Wide-Column Store):**
-- Time-series data modeling
-- Partition key design
-- Clustering keys and sorting
-- CAP theorem in practice (AP system)
-- CQL queries and best practices
-
-### 4. Change Data Capture (CDC)
-- Database change tracking
-- Event sourcing patterns
-- Debezium platform
-- Building derived data stores
-- Maintaining data consistency across systems
-
-### 5. Containerization & Orchestration
-- Docker fundamentals
-- Docker Compose for multi-container apps
-- Container networking
-- Volume management
-- Environment configuration
-- Container health checks
-
-### 6. DevOps Practices
-- Infrastructure as Code (IaC)
-- Service dependencies management
-- Logging and monitoring
-- Debugging distributed systems
-- Error handling and retry logic
-
-### 7. API Integration
-- REST API consumption
-- Rate limiting considerations
-- Error handling for external services
-- Data parsing and validation
-
-### 8. Python for Data Engineering
-- Kafka client (`kafka-python`)
-- Database drivers (pymongo, cassandra-driver)
-- Asynchronous operations
-- Logging best practices
-- Environment variable management
-
-### 9. Production Readiness
-- **Reliability**: Retry logic, error handling
-- **Observability**: Logging, monitoring, metrics
-- **Scalability**: Designing for growth
-- **Security**: Authentication, keyfile management
-- **Documentation**: Writing clear, helpful docs
-
-### 10. Real-World Problem Solving
-- Debugging connection issues
-- Understanding error messages
-- Reading logs effectively
-- Performance troubleshooting
-- Data consistency challenges
-
----
-
-## 📚 Additional Resources
-
-### Learning Kafka
-- [Kafka Official Documentation](https://kafka.apache.org/documentation/)
-- [Confluent Kafka Tutorials](https://kafka-tutorials.confluent.io/)
-- [Understanding Kafka Topics and Partitions](https://www.confluent.io/blog/apache-kafka-intro-how-kafka-works/)
-
-### MongoDB
-- [MongoDB University](https://university.mongodb.com/) (Free courses)
-- [MongoDB Manual](https://docs.mongodb.com/manual/)
-- [Replica Sets Explained](https://docs.mongodb.com/manual/replication/)
-
-### Cassandra
-- [DataStax Academy](https://academy.datastax.com/) (Free courses)
-- [Cassandra Data Modeling](https://cassandra.apache.org/doc/latest/cassandra/data_modeling/)
-- [CQL Reference](https://cassandra.apache.org/doc/latest/cassandra/cql/)
-
-### Debezium
-- [Debezium Documentation](https://debezium.io/documentation/)
-- [CDC Tutorial](https://debezium.io/blog/2020/02/10/event-sourcing-vs-cdc/)
-
-### Docker
-- [Docker Getting Started](https://docs.docker.com/get-started/)
-- [Docker Compose Tutorial](https://docs.docker.com/compose/gettingstarted/)
-
----
-
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome! Here's how you can help:
 
@@ -1179,28 +709,18 @@ Contributions are welcome! Here's how you can help:
 
 ---
 
-## 📝 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
----
-
-## 👨‍💻 Author
+## Author
 
 **Your Name**
-- GitHub: [@yourusername](https://github.com/yourusername)
-- LinkedIn: [Your LinkedIn](https://linkedin.com/in/yourprofile)
-- Email: your.email@example.com
+- GitHub: [@25thOliver](https://github.com/25thOliver)
+- LinkedIn: [LinkedIn](https://www.linkedin.com/in/samwel-oliver/)
+- Email: oliversamwel33@gmail.com
 
 ---
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - **Open-Meteo API** for providing free air quality data
 - **Apache Kafka** community for excellent documentation
 - **Debezium** team for the CDC platform
 - All open-source contributors who make projects like this possible
-
----
-
-## 📸 Screenshots
