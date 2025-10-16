@@ -56,7 +56,8 @@ def fetch_air_quality(city, lat, lon):
     params = {
         "latitude": lat,
         "longitude": lon,
-        "hourly": "pm2_5,pm10,carbon_monoxide,nitrogen_dioxide,sulphur_dioxide,ozone,uv_index"
+        "hourly": "pm2_5,pm10,carbon_monoxide,nitrogen_dioxide,sulphur_dioxide,ozone,uv_index",
+        "past_hours": 24
     }
     try:
         response = requests.get(api_url, params=params, timeout=10)
