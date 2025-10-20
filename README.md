@@ -7,713 +7,550 @@ A complete end-to-end data engineering project that monitors air quality in real
 ## Table of Contents
 
 1. [Project Overview](#project-overview)
-2. [What Problem Does This Solve?](#what-problem-does-this-solve)
-3. [Architecture Overview](#architecture-overview)
-4. [Technologies Used](#technologies-used)
-5. [How the System Works](#how-the-system-works)
-6. [Prerequisites](#prerequisites)
-7. [Installation & Setup](#installation--setup)
-8. [Understanding Each Component](#understanding-each-component)
-9. [Monitoring & UI Dashboards](#monitoring--ui-dashboards)
-10. [Querying the Data](#querying-the-data)
-11. [Project Structure](#project-structure)
-12. [Troubleshooting](#troubleshooting)
-13. [Future Enhancements](#future-enhancements)
-14. [Learning Outcomes](#learning-outcomes)
+2. [Architecture Overview](#architecture-overview)
+3. [Technologies Used](#technologies-used)
+4. [Prerequisites](#prerequisites)
+5. [Quick Start](#quick-start)
+6. [Understanding the Data Flow](#understanding-the-data-flow)
+7. [Monitoring & Dashboards](#monitoring--dashboards)
+8. [Querying the Data](#querying-the-data)
+9. [Troubleshooting](#troubleshooting)
+10. [Future Enhancements](#future-enhancements)
 
 ---
 
 ## Project Overview
 
 This project builds a **real-time data pipeline** that:
-- Collects air quality data (PM2.5, PM10, carbon monoxide, ozone, etc.) for Nairobi and Mombasa
-- Streams the data through a message queue (Kafka)
-- Stores raw data in MongoDB for flexibility
-- Captures changes automatically using Change Data Capture (CDC)
-- Stores processed data in Cassandra for fast analytics queries
+- Collects air quality data (PM2.5, PM10, CO, NO2, SO2, Ozone, UV Index) every hour
+- Streams data through Kafka message queue
+- Stores raw data in MongoDB
+- Captures changes automatically using CDC (Change Data Capture)
+- Stores processed data in Cassandra for fast analytics
 
-Think of it like this: Imagine you're monitoring the air quality in your city every hour. This system automatically fetches that information, saves it in multiple places for different purposes, and makes it available for analysis - all happening in real-time without manual intervention.
-
-** Key Features:**
-- Fully automated data collection every hour
-- Real-time data streaming
-- Automatic change tracking (you know when new data arrives)
+**Key Features:**
+- Fully automated data collection (hourly schedule)
+- Real-time data streaming with Apache Kafka
+- Change Data Capture with Debezium
 - Multiple storage systems optimized for different use cases
 - Built-in monitoring dashboards
-- Containerized (runs anywhere with Docker)
 - Production-ready error handling and retry logic
-
----
-
-## What Problem Does This Solve?
-
-### The Challenge
-Air quality affects millions of people's health daily. To build applications like:
-- Public health monitoring systems
-- Air quality prediction models
-- Environmental impact studies
-- Mobile apps showing air quality alerts
-
-You need **reliable, real-time air quality data** that's easy to query and analyze.
-
-### Our Solution
-This pipeline automates everything:
-1. **Data Collection**: Fetches data from Open-Meteo API hourly
-2. **Reliability**: Automatically retries on failures
-3. **Scalability**: Can easily add more cities or data sources
-4. **Flexibility**: Stores data in multiple formats for different needs
-5. **Real-time**: Changes are captured and propagated instantly
+- Fully containerized with Docker
 
 ---
 
 ## Architecture Overview
 
-Our pipeline follows the **Lambda Architecture** pattern, combining real-time and batch processing capabilities.
-
 ```
 ┌─────────────────┐
-│   Open-Meteo    │  ← External Air Quality API
+│   Open-Meteo    │  External Air Quality API
 │      API        │
 └────────┬────────┘
-         │ HTTP Request (Every hour)
+         │ HTTP (hourly)
          ↓
 ┌─────────────────┐
-│    Producer     │  ← Python script fetching data
-│   (Ingestion)   │
+│    Producer     │  Python script (data ingestion)
 └────────┬────────┘
-         │ Publishes
+         │ Publish
          ↓
 ┌─────────────────┐
-│  Kafka Broker   │  ← Message Queue (Streaming)
-│   (Topic: air_  │
-│  quality_data)  │
+│  Kafka Broker   │  Message queue
+│  (air_quality_  │
+│      data)      │
 └────────┬────────┘
-         │ Subscribes
+         │ Subscribe
          ↓
 ┌─────────────────┐
-│    Consumer     │  ← Reads from Kafka
-│ (MongoDB Writer)│
+│    Consumer     │  MongoDB writer
 └────────┬────────┘
-         │ Inserts
+         │ Insert
          ↓
 ┌─────────────────┐
-│    MongoDB      │  ← Raw Data Storage (Document DB)
-│ (Raw Documents) │
+│    MongoDB      │  Raw data storage (Replica Set)
+│ (air_quality_   │
+│      raw)       │
 └────────┬────────┘
-         │ Monitors Changes
+         │ Monitor changes
          ↓
 ┌─────────────────┐
-│    Debezium     │  ← Change Data Capture (CDC)
-│  CDC Connector  │
+│    Debezium     │  Change Data Capture (CDC)
+│   Connector     │
 └────────┬────────┘
-         │ Publishes Changes
+         │ Publish changes
          ↓
 ┌─────────────────┐
-│  Kafka Broker   │  ← CDC Events Stream
-│ (Topic: mongo_  │
-│  cdc.raw_data)  │
+│     Kafka       │  CDC topic
+│  (mongo_cdc.    │
+│ air_quality_db) │
 └────────┬────────┘
-         │ Subscribes
+         │ Subscribe
          ↓
 ┌─────────────────┐
-│   Cassandra     │  ← Analytics Consumer
-│    Consumer     │
+│   Cassandra     │  Analytics storage
+│   Consumer      │
 └────────┬────────┘
-         │ Inserts
+         │ Insert
          ↓
 ┌─────────────────┐
-│   Cassandra     │  ← Time-Series Analytics DB
-│  (Optimized for │
-│   Fast Queries) │
+│   Cassandra     │  Time-series analytics
+│ (air_quality_   │
+│   readings)     │
 └─────────────────┘
 ```
-
-**📸 INSERT SCREENSHOT: Architecture diagram (create using draw.io or similar)**
 
 ---
 
 ## Technologies Used
 
-### Core Components
-
 | Technology | Purpose | Why We Use It |
 |------------|---------|---------------|
-| **Python 3.10** | Programming Language | Easy to learn, great for data processing |
-| **Apache Kafka** | Message Broker | Handles high-volume real-time data streaming |
-| **MongoDB** | NoSQL Database | Flexible schema for raw data storage |
-| **Cassandra** | Wide-Column Store | Optimized for time-series queries |
-| **Debezium** | CDC Platform | Automatically captures database changes |
-| **Docker** | Containerization | Ensures consistency across environments |
-| **Zookeeper** | Coordination Service | Manages Kafka cluster |
+| **Python** | Data ingestion & processing | Easy API integration, rich libraries |
+| **Apache Kafka** | Message streaming | Handles high-throughput data streams |
+| **MongoDB** | Raw data storage | Flexible schema for semi-structured data |
+| **Debezium** | Change Data Capture | Automatically tracks database changes |
+| **Cassandra** | Analytics storage | Fast time-series queries at scale |
+| **Docker** | Containerization | Consistent environments, easy deployment |
+| **Zookeeper** | Kafka coordination | Manages Kafka cluster metadata |
 
-### Python Libraries
-
-- `kafka-python`: Kafka client for producing and consuming messages
-- `pymongo`: MongoDB driver for Python
-- `cassandra-driver`: Cassandra client
-- `requests`: HTTP library for API calls
-- `python-dotenv`: Environment variable management
-
----
-
-## How the System Works
-
-Let me break down the data flow in simple terms:
-
-### Step 1: Data Collection (Ingestion)
-**Every hour**, our **Producer** script:
-1. Wakes up automatically
-2. Contacts the Open-Meteo weather API
-3. Requests air quality data for Nairobi and Mombasa
-4. Receives metrics like:
-   - PM2.5 (fine particulate matter)
-   - PM10 (coarse particulate matter)
-   - Carbon monoxide levels
-   - Nitrogen dioxide
-   - Sulphur dioxide
-   - Ozone levels
-   - UV index
-![Producer logs showing succesful data fetch](images/producer_logs.png)
-*Producer logs showing successful data fetch*
-
-### Step 2: Message Streaming (Kafka)
-The Producer doesn't directly save to a database. Instead, it:
-1. Publishes the data to a **Kafka topic** (think of it as a mailbox)
-2. This allows multiple consumers to read the same data
-3. Provides fault tolerance (messages are kept even if consumers fail)
-
-**Why use Kafka?**
-- **Decoupling**: Producer and consumers work independently
-- **Scalability**: Easy to add more consumers
-- **Reliability**: Messages aren't lost if something crashes
-![Kafka UI showing the air_quality_data](images/kafka_ui_msgs.png)
-*Kafka UI showing the air_quality_data topic*
-
-### Step 3: Raw Data Storage (MongoDB)
-A **Consumer** service:
-1. Reads messages from Kafka
-2. Stores each reading in MongoDB
-3. MongoDB keeps the data in its original form
-
-**Why MongoDB?**
-- Flexible schema (easy to add new fields later)
-- Great for raw, unprocessed data
-- Fast writes for incoming data
-
-**📸 INSERT SCREENSHOT: MongoDB data sample using MongoDB Compass or mongosh**
-
-### Step 4: Change Data Capture (Debezium)
-Here's where it gets interesting! **Debezium** acts like a watchdog:
-1. Monitors MongoDB for any changes (inserts, updates, deletes)
-2. Whenever data changes, it automatically:
-   - Captures what changed
-   - Creates a change event
-   - Publishes it to another Kafka topic
-
-**Why CDC?**
-- No need to modify application code
-- Captures every change automatically
-- Enables building downstream applications without touching the source
-
-**📸 INSERT SCREENSHOT: Debezium connector status in Kafka Connect UI**
-
-### Step 5: Analytics Storage (Cassandra)
-Another **Consumer** service:
-1. Reads change events from the CDC Kafka topic
-2. Transforms data if needed
-3. Stores in Cassandra with optimized schema
-
-**Why Cassandra?**
-- Designed for time-series data
-- Fast queries for date ranges
-- Can handle massive data volumes
-- Great for dashboards and analytics
-![Cassandra data queried via cqlsh](images/cassandra_query.png)
-*Cassandra data queried via cqlsh*
+**Python Libraries:**
+- `kafka-python` - Kafka producer/consumer
+- `pymongo` - MongoDB driver
+- `cassandra-driver` - Cassandra driver
+- `requests` - HTTP API calls
+- `python-dotenv` - Environment variable management
 
 ---
 
 ## Prerequisites
 
-Before starting, you need:
+- **Docker** (v20.10+) and **Docker Compose** (v2.0+)
+- **Python 3.10+** (for local development)
+- **4GB RAM minimum** (8GB recommended)
+- **10GB free disk space**
+- **Internet connection** (to fetch air quality data)
 
-1. **Docker & Docker Compose**
-   - Docker Desktop (Windows/Mac) or Docker Engine (Linux)
-   - Version 20.10 or higher
-   - [Download Docker](https://www.docker.com/get-started)
-
-2. **Git** (to clone the repository)
-   - [Download Git](https://git-scm.com/downloads)
-
-3. **System Requirements**
-   - At least 8GB RAM (16GB recommended)
-   - 20GB free disk space
-   - Internet connection (for pulling Docker images and API calls)
-
-4. **Basic Command Line Knowledge**
-   - Opening a terminal/command prompt
-   - Running commands
-   - Basic file navigation
-
-**Note:** You don't need to install Python, Kafka, MongoDB, or Cassandra separately - Docker handles everything!
+**Verify installation:**
+```bash
+docker --version
+docker-compose --version
+python3 --version
+```
 
 ---
 
-## Installation & Setup
+## Quick Start
 
-### Step 1: Clone the Repository
-
+### 1. Clone the Repository
 ```bash
 git clone https://github.com/yourusername/air-quality-pipeline.git
 cd air-quality-pipeline
 ```
 
-### Step 2: Create Environment File
+### 2. Create Environment File
+```bash
+cp .env
+```
 
-Create a `.env` file in the project root with the following content:
-
+**Edit `.env` if needed** (default values work out of the box):
 ```env
 # Kafka Configuration
 BOOTSTRAP_SERVERS=kafka:9092
 KAFKA_TOPIC=air_quality_data
-CDC_TOPIC=mongo_cdc.air_quality_db.air_quality_raw
 
 # MongoDB Configuration
-MONGO_URI=mongodb://airflow:airflow123@mongo:27017/air_quality_db?authSource=admin&replicaSet=rs0
-MONGO_DB=air_quality_db
-MONGO_COLLECTION=air_quality_raw
+MONGO_HOST=mongo
+MONGO_PORT=27017
+MONGO_USER=airflow
+MONGO_PASSWORD=airflow123
 
 # Cassandra Configuration
-CASSANDRA_HOST=cassandra
+CASSANDRA_HOST=Cassandra
 CASSANDRA_PORT=9042
-CASSANDRA_KEYSPACE=air_quality_analytics
 
-# API Configuration
+# Data Collection
+FETCH_INTERVAL=3600  # 1 hour in seconds
 OPEN_METEO_URL=https://air-quality-api.open-meteo.com/v1/air-quality
-FETCH_INTERVAL=3600
-
-# City Coordinates (Nairobi)
-NAIROBI_LAT=-1.286389
-NAIROBI_LON=36.817223
-
-# City Coordinates (Mombasa)
-MOMBASA_LAT=-4.0435
-MOMBASA_LON=39.6682
 ```
 
-### Step 3: Create MongoDB Keyfile
-
-This is required for MongoDB replica set security:
-
+### 3. Create MongoDB Keyfile
 ```bash
 openssl rand -base64 756 > mongo-keyfile
 chmod 400 mongo-keyfile
-sudo chown 999:999 mongo-keyfile
+sudo chown 999:999 mongo-keyfile  # MongoDB user ID in Docker
 ```
 
-
-### Step 4: Start All Services
-
+### 4. Start All Services
 ```bash
 docker-compose up -d
 ```
 
-This command:
-- Downloads all necessary Docker images (first time only)
-- Starts all services in the background
-- Takes 2-5 minutes depending on your internet speed
-![docker-compose up output showing all services starting](images/docker_compose_up.png)
-*docker-compose up output showing all services starting*
+![Docker Compose Up](images/docker_compose_up.png)
+*Docker Compose pulling images and starting all services*
 
-### Step 5: Initialize MongoDB Replica Set
-
-Wait for MongoDB to fully start (about 30 seconds), then:
-
-```bash
-docker logs mongo-init
-```
-
-You should see: `Replica set initialized successfully!`
-![MongoDB Initialization](images/mongo_init_success.png)
-*mongo-init logs showing successful initialization*
-
-### Step 6: Initialize Cassandra Schema
-
-```bash
-docker exec -i cassandra cqlsh < storage/cassandra_setup.cql
-```
-
-This creates the necessary keyspace and tables in Cassandra.
-
-### Step 7: Register Debezium CDC Connector
-
-```bash
-curl -X POST http://localhost:8084/connectors \
-  -H "Content-Type: application/json" \
-  -d @streaming/mongo_connector_config.json
-```
-
-Verify it's running:
-
-```bash
-curl -s http://localhost:8084/connectors/mongo-air-quality-connector/status | python3 -m json.tool
-```
-
-You should see `"state": "RUNNING"`
-
-**📸 INSERT SCREENSHOT: Connector status output**
-
-### Step 8: Verify Everything is Running
-
+**Wait 2-3 minutes** for all services to start, then verify:
 ```bash
 docker ps
 ```
 
-You should see 10 containers running:
-- mongo
-- mongo-init (exited - that's normal)
-- zookeeper
-- kafka
-- kafka-ui
-- producer
-- consumer
-- mongo-connector
-- cassandra
-- cassandra-consumer
-![Docker ps](images/docker_ps.png)
-*docker ps output showing all containers*
+You should see 9 containers running:
+- `mongo`, `mongo-init`
+- `zookeeper`, `kafka`, `kafka-ui`
+- `mongo-connector`
+- `producer`, `consumer`, `cassandra-consumer`
+- `cassandra`
+
+![Docker containers running](images/docker_ps.png)
+*All 9 containers running - verify with docker ps*
+
+### 5. Initialize MongoDB Replica Set
+```bash
+bash storage/init-replica-set.sh
+```
+
+![MongoDB replica set initialization](images/mongo_init_success.png)
+*MongoDB replica set initialized successfully*
+
+### 6. Initialize Cassandra Schema
+```bash
+docker exec -i cassandra cqlsh < storage/cassandra_setup.cql
+```
+
+### 7. Register Debezium CDC Connector
+```bash
+bash streaming/register-connector.sh
+```
+
+### 8. Verify Everything is Running
+```bash
+bash health-check.sh
+```
+![Health-check status](images/healthcheck.png)
 
 ---
 
-## Understanding Each Component
+## Understanding the Data Flow
 
-### 1. Producer (Data Ingestion)
+### How Data Moves Through the Pipeline
 
-**Location:** `ingestion/producer.py`
-
-**What it does:**
-- Runs every hour (configurable via `FETCH_INTERVAL`)
-- Fetches air quality data from Open-Meteo API
+**Step 1: Producer Fetches Data (Every Hour)**
+- Producer calls Open-Meteo API for Nairobi and Mombasa
+- Requests last 24 hours of historical data with `forecast_days=0`
+- Selects the most recent hour with complete (non-null) data
 - Publishes to Kafka topic `air_quality_data`
 
-**Key Features:**
-- Automatic retry logic (5 attempts)
-- Connection pooling to Kafka
-- Detailed logging
+**Important:** The producer fetches **actual historical data**, not forecasts. It searches backwards through the API response to find the most recent hour with all pollutant values populated.
 
-**Monitor it:**
-```bash
-docker logs -f producer
-```
-
-**Expected log output:**
-```
-2025-10-16 21:51:42 [INFO] Connected to Kafka broker at kafka:9092
-2025-10-16 21:51:47 [INFO] Published data for Nairobi at 2025-10-20T23:00
-2025-10-16 21:51:48 [INFO] Published data for Mombasa at 2025-10-20T23:00
-2025-10-16 21:51:48 [INFO] waiting for the next cycle...
-```
 ![Producer logs](images/producer_logs.png)
-*Producer logs*
+*Producer logs showing successful data fetching and publishing to Kafka*
 
----
+**Step 2: Consumer Writes to MongoDB**
+- Consumer reads from Kafka topic
+- Inserts raw data into MongoDB collection `air_quality_raw`
+- MongoDB stores complete JSON document with all fields
 
-### 2. Kafka Broker (Message Queue)
-
-**Purpose:** Acts as a buffer between data producers and consumers
-
-**Key Concepts:**
-- **Topics**: Named channels (like `air_quality_data`)
-- **Partitions**: Topics split for parallel processing
-- **Offset**: Position in the message stream
-
-**Check topics:**
-```bash
-docker exec kafka kafka-topics --bootstrap-server localhost:9092 --list
-```
-
-**Output:**
-```
-air_quality_data
-mongo_cdc.air_quality_db.air_quality_raw
-connect-configs
-connect-offsets
-connect-status
-```
-
----
-
-### 3. Consumer (MongoDB Writer)
-
-**Location:** `ingestion/consumer.py`
-
-**What it does:**
-- Subscribes to Kafka topic `air_quality_data`
-- Reads each message
-- Inserts into MongoDB collection `air_quality_raw`
-
-**Monitor it:**
-```bash
-docker logs -f consumer
-```
-
-**Expected output:**
-```
-2025-10-16 21:57:16 [INFO] Inserted record for Nairobi at 2025-10-20T23:00
-2025-10-16 21:57:16 [INFO] Inserted record for Mombasa at 2025-10-20T23:00
-```
 ![Consumer logs](images/consumer_logs.png)
-*Consumer logs*
+*Consumer logs showing records inserted into MongoDB*
+
+**Step 3: Debezium Captures Changes**
+- Debezium monitors MongoDB replica set
+- Automatically detects new documents
+- Publishes change events to CDC topic `mongo_cdc.air_quality_db.air_quality_raw`
+
+![Debezium connector status](images/connector.png)
+*Debezium connector registered and running*
+
+**Step 4: Cassandra Consumer Processes CDC Events**
+- Reads from CDC topic
+- Validates data (skips records with None values)
+- Inserts into Cassandra table `air_quality_readings`
+
+![Cassandra Consumer Logs](images/cassandra_consumer.png)
+```bash
+docker logs cassandra-consumer --tail 20
+```
+*Show: "Inserted reading for Nairobi at..." messages*
+
+**Step 5: Data Ready for Analytics**
+- Cassandra stores time-series data optimized for queries
+- Two timestamps tracked:
+  - `timestamp`: The hour the air quality reading represents (from API data)
+  - `inserted_at`: When the record was inserted (system time)
 
 ---
 
-### 4. MongoDB (Raw Data Store)
+## Monitoring & Dashboards
 
-**Purpose:** Stores all air quality readings in their original format
+### Kafka UI
+**Access:** http://localhost:8083
 
-**Data Structure:**
+Monitor Kafka topics, messages, and consumers:
+- View messages in `air_quality_data` topic
+- Check CDC events in `mongo_cdc.air_quality_db.air_quality_raw`
+- Monitor consumer lag
+
+![Kafka UI dashboard](images/kafka_ui.png)
+*Kafka UI showing topics and overview*
+
+![Kafka messages](images/kafka_ui_msgs.png)
+*Messages in air_quality_data topic*
+
+![Kafka consumers](images/kafka_ui_consumers.png)
+*Consumer groups and their status*
+
+### Kafka Connect API
+**Check Debezium connector status:**
+```bash
+curl -s http://localhost:8084/connectors/mongo-air-quality-connector/status | python3 -m json.tool
+```
+
+Expected output:
 ```json
 {
-  "_id": ObjectId("68f14dc6a9f4452c033325d8"),
-  "time": "2025-10-20T23:00",
-  "pm2_5": 8.9,
-  "pm10": 12.7,
-  "carbon_monoxide": 115.0,
-  "nitrogen_dioxide": 3.0,
-  "sulphur_dioxide": 2.1,
-  "ozone": 50.0,
-  "uv_index": 0.0,
-  "timestamp": "2025-10-20T23:00",
-  "city": "Mombasa"
+    "name": "mongo-air-quality-connector",
+    "connector": {
+        "state": "RUNNING",
+        "worker_id": "..."
+    },
+    "tasks": [
+        {
+            "id": 0,
+            "state": "RUNNING",
+            "worker_id": "..."
+        }
+    ]
 }
 ```
 
-**Query MongoDB:**
-```bash
-docker exec mongo mongosh -u airflow -p airflow123 --authenticationDatabase admin --quiet \
-  --eval "db.getSiblingDB('air_quality_db').air_quality_raw.find().limit(5)"
-```
-
-**Count documents:**
-```bash
-docker exec mongo mongosh -u airflow -p airflow123 --authenticationDatabase admin --quiet \
-  --eval "db.getSiblingDB('air_quality_db').air_quality_raw.countDocuments()"
-```
-![MongoDB query results](images/mongodb_query.png)
-*MongoDB query results*
+![Debezium connector](images/connector.png)
+*Debezium connector status showing RUNNING state*
 
 ---
 
-### 5. Debezium CDC Connector
+## Querying the Data
 
-**Purpose:** Captures every change in MongoDB and streams it to Kafka
-
-**How it works:**
-1. Monitors MongoDB's oplog (operation log)
-2. When a document is inserted/updated/deleted
-3. Creates a change event with:
-   - `before`: State before change
-   - `after`: State after change
-   - `op`: Operation type (c=create, u=update, d=delete, r=read)
-4. Publishes to CDC topic
-
-**Check connector status:**
+### MongoDB (Raw Data)
 ```bash
-curl -s http://localhost:8084/connectors/mongo-air-quality-connector/status | python3 -m json.tool
-```
+# Connect to MongoDB
+docker exec -it mongo mongosh -u airflow -p airflow123 --authenticationDatabase admin
 
-**List all connectors:**
-```bash
-curl -s http://localhost:8084/connectors
-```
+# Switch to database
+use air_quality_db
 
-**📸 INSERT SCREENSHOT: Connector status**
+# Count documents
+db.air_quality_raw.countDocuments()
 
----
-
-### 6. Cassandra Consumer
-
-**Location:** `streaming/kafka_consumer.py`
-
-**What it does:**
-- Reads CDC events from Kafka
-- Parses the change data
-- Inserts into Cassandra for analytics
-
-**Monitor it:**
-```bash
-docker logs -f cassandra-consumer
-```
-
-**Expected output:**
-```
-2025-10-16 21:28:47 [INFO] Connected to Cassandra keyspace: air_quality_analytics
-2025-10-16 21:28:47 [INFO] Subscribed to CDC topic: mongo_cdc.air_quality_db.air_quality_raw
-2025-10-16 21:28:47 [INFO] Inserted reading for Nairobi at 2025-10-20 23:00:00
-2025-10-16 21:28:47 [INFO] Inserted reading for Mombasa at 2025-10-20 23:00:00
-```
-![Cassandra consumer logs]()
-**📸 INSERT SCREENSHOT: Cassandra consumer logs**
-
----
-
-### 7. Cassandra (Analytics Store)
-
-**Purpose:** Optimized storage for time-series queries and analytics
-
-**Schema Design:**
-```sql
-PRIMARY KEY (city, timestamp)
-```
-- **Partition Key**: `city` (data for each city stored together)
-- **Clustering Key**: `timestamp` (sorted by time, newest first)
-
-This design allows fast queries like:
-- "Get all readings for Nairobi in the last 24 hours"
-- "Show me the trend for PM2.5 in Mombasa this week"
-
-**Query Cassandra:**
-```bash
-# Count all readings
-docker exec cassandra cqlsh -e "SELECT COUNT(*) FROM air_quality_analytics.air_quality_readings;"
-
-# View sample data
-docker exec cassandra cqlsh -e "SELECT city, timestamp, pm2_5, pm10, ozone FROM air_quality_analytics.air_quality_readings LIMIT 5;"
+# View latest 5 records
+db.air_quality_raw.find().sort({_id: -1}).limit(5)
 
 # Query specific city
-docker exec cassandra cqlsh -e "SELECT timestamp, pm2_5, ozone FROM air_quality_analytics.air_quality_readings WHERE city='Nairobi' LIMIT 10;"
+db.air_quality_raw.find({city: "Nairobi"}).limit(5)
 ```
-![Cassandra query results](images/query_results.png)
-*Cassandra query results*
 
----
+![MongoDB query results](images/mongodb_query.png)
+*MongoDB raw data with PM2.5, PM10, ozone, and other pollutant measurements*
 
-## Monitoring & UI Dashboards
-
-### 1. Kafka UI (Monitoring Kafka)
-
-**Access:** http://localhost:8083
-
-**What you can do:**
-- View all Kafka topics
-- See messages in real-time
-- Monitor consumer lag
-- Check topic configurations
-- Browse message content
-
-**How to use:**
-1. Open browser and go to `http://localhost:8083`
-2. You'll see a dashboard with all topics
-3. Click on `air_quality_data` to see messages
-4. Click on `mongo_cdc.air_quality_db.air_quality_raw` to see CDC events
-
-**Key Metrics to Monitor:**
-- **Messages**: Total messages in each topic
-- **Consumer Groups**: Active consumers and their offsets
-- **Lag**: How far behind consumers are
-![Kafka UI dashboard](images/kafka_ui.png)
-![Messages](images/kafka_ui_msgs.png)
-![Consumers](images/kafka_ui_consumers.png)
-
-**Troubleshooting with Kafka UI:**
-- If producer isn't working → Check if `air_quality_data` topic has recent messages
-- If consumer isn't working → Check consumer group lag
-- If CDC isn't working → Check if CDC topic has messages
-
----
-
-### 2. Kafka Connect UI (Monitoring Debezium)
-
-**Access:** http://localhost:8084
-
-This is a REST API endpoint. Use it with curl or Postman.
-
-**Check connector status:**
+### Cassandra (Analytics)
 ```bash
-curl -s http://localhost:8084/connectors/mongo-air-quality-connector/status | python3 -m json.tool
+# Connect to Cassandra
+docker exec -it cassandra cqlsh
+
+# View all readings for a city
+SELECT city, timestamp, inserted_at, pm2_5, pm10, ozone 
+FROM air_quality_analytics.air_quality_readings 
+WHERE city='Nairobi';
+
+# Count total readings
+SELECT COUNT(*) FROM air_quality_analytics.air_quality_readings;
+
+# View recent readings (by city)
+SELECT * FROM air_quality_analytics.air_quality_readings 
+WHERE city='Mombasa' 
+LIMIT 10;
 ```
 
+![Cassandra query results](images/cassandra_query.png)
+*Cassandra data showing city, timestamp, and air quality measurements*
 
+### Understanding the Timestamps
+
+When you see log output like:
+```
+2025-10-20 04:34:27 [INFO] Inserted reading for Nairobi at 2025-10-24 12:00:00
+```
+
+- **First timestamp** (`2025-10-20 04:34:27`): System time when insertion happened
+- **Second timestamp** (`2025-10-24 12:00:00`): Data timestamp - the hour this air quality measurement represents
+
+The data timestamp may be a few days ahead of the current date due to API data availability and timezone handling.
 
 ---
 
-### Issue 5: Only 2 Records in Cassandra
+## Troubleshooting
 
-**Symptoms:**
-Logs show many inserts but `SELECT COUNT(*)` shows only 2 records.
+### Check Container Logs
+```bash
+docker logs producer          # Producer logs
+docker logs consumer          # MongoDB consumer logs
+docker logs cassandra-consumer # Cassandra consumer logs
+docker logs mongo-connector   # Debezium CDC logs
+```
+![Logs](images/logs.png)
 
-*
+### Common Issues
+
+**Issue 1: MongoDB Replica Set Not Initialized**
+```bash
+# Error: "not master and slaveOk=false"
+# Fix:
+bash storage/init-replica-set.sh
 ```
 
+**Issue 2: Debezium Connector Not Registered**
+```bash
+# Check if connector exists:
+curl -s http://localhost:8084/connectors
+
+# If empty, register it:
+bash streaming/register-connector.sh
+```
+
+**Issue 3: No Data in Cassandra**
+```bash
+# Check if Cassandra consumer is processing:
+docker logs cassandra-consumer --tail 20
+
+# Common causes:
+# 1. CDC connector not registered (see Issue 2)
+# 2. Data has None values (consumer skips these)
+# 3. Waiting for next hourly cycle
+```
+
+**Issue 4: Producer Not Fetching Data**
+```bash
+# Restart producer to trigger immediate fetch:
+docker-compose restart producer
+
+# Check logs:
+docker logs producer --tail 20
+```
+
+### Restart Everything
+```bash
+docker-compose down
+docker-compose up -d
+bash storage/init-replica-set.sh
+bash streaming/register-connector.sh
+```
+
+---
 
 ## Future Enhancements
 
-This project can be extended in many ways:
+This project can be extended with:
 
 ### 1. Data Visualization
-- Add Grafana for real-time dashboards
-- Create charts showing:
-  - PM2.5 trends over time
-  - Comparison between cities
-  - Air quality index (AQI) calculations
-  - Health recommendations based on levels
+- Add Grafana dashboards
+- Real-time PM2.5 trends
+- City comparisons
+- Air Quality Index (AQI) calculations
 
 ### 2. More Cities
-Add more Kenyan cities:
-```python
-CITIES = {
-    "Nairobi": {...},
-    "Mombasa": {...},
-    "Kisumu": {"lat": -0.0917, "lon": 34.7680},
-    "Nakuru": {"lat": -0.3031, "lon": 36.0800},
-    "Eldoret": {"lat": 0.5143, "lon": 35.2698}
-}
-```
+Add more Kenyan cities (Kisumu, Nakuru, Eldoret)
 
 ### 3. Data Processing
-- Calculate Air Quality Index (AQI) from raw pollutant values
-- Add data quality checks and validation
-- Implement data aggregation pipelines
-- Create hourly, daily, weekly summaries
+- Calculate AQI from raw pollutant values
+- Hourly/daily/weekly aggregations
+- Data quality checks and validation
 
 ### 4. Alerting System
-- Send notifications when air quality exceeds thresholds
 - Email/SMS alerts for unhealthy air quality
-- Integration with Slack or Discord webhooks
+- Slack/Discord webhooks
+- Threshold-based notifications
 
 ### 5. Machine Learning
 - Predict future air quality levels
-- Anomaly detection for unusual pollution spikes
-- Correlation analysis with weather data
+- Anomaly detection for pollution spikes
+- Correlation with weather data
+
+### 6. API Layer
+- Build REST API on top of Cassandra
+- Serve air quality data to mobile apps
+- GraphQL endpoint for flexible queries
 
 ---
+
+## Project Structure
+
+```
+air-quality-pipeline/
+├── docker-compose.yml          # Container orchestration
+├── Dockerfile                  # Python environment
+├── requirements.txt            # Python dependencies
+├── .env                        # Environment variables
+├── mongo-keyfile              # MongoDB security key
+├── ingestion/
+│   ├── producer.py            # Data fetcher (Open-Meteo API)
+│   └── consumer.py            # MongoDB writer
+├── streaming/
+│   ├── kafka_consumer.py      # Cassandra consumer (CDC)
+│   ├── mongo_connector_config.json  # Debezium config
+│   └── register-connector.sh  # CDC registration script
+├── storage/
+│   ├── init-replica-set.sh    # MongoDB replica set setup
+│   ├── mongo_init.js          # MongoDB initialization
+│   └── cassandra_setup.cql    # Cassandra schema
+└── health-check.sh            # System health checker
+```
+
+---
+
+## Learning Outcomes
+
+By building and running this project, you'll learn:
+
+**Data Engineering Fundamentals**
+- Building ETL/ELT pipelines
+- Real-time vs batch processing
+- Message queue architecture
+
+**Distributed Systems**
+- Apache Kafka for streaming
+- Replica sets and data replication
+- Eventual consistency patterns
+
+**Change Data Capture (CDC)**
+- Debezium architecture
+- Event-driven data pipelines
+- Database change streams
+
+**Multiple Database Paradigms**
+- Document databases (MongoDB)
+- Column-family databases (Cassandra)
+- Choosing the right database for the use case
+
+**DevOps & Containers**
+- Docker containerization
+- Docker Compose orchestration
+- Service health monitoring
+
+---
+
 ## Contributing
 
-Contributions are welcome! Here's how you can help:
+Contributions are welcome! Here's how:
 
-1. **Report Bugs**: Open an issue describing the bug
-2. **Suggest Features**: Share your ideas for enhancements
+1. **Report Bugs**: Open an issue
+2. **Suggest Features**: Share your ideas
 3. **Submit Pull Requests**: Fix bugs or add features
-4. **Improve Documentation**: Help make the docs clearer
-5. **Share Your Experience**: Write blog posts or tutorials
-
-### Development Workflow
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Make your changes
-4. Test thoroughly
-5. Commit: `git commit -m 'Add amazing feature'`
-6. Push: `git push origin feature/amazing-feature`
-7. Open a Pull Request
+4. **Improve Documentation**: Make docs clearer
 
 ---
 
 ## Author
 
-**Your Name**
+**Samwel Oliver**
 - GitHub: [@25thOliver](https://github.com/25thOliver)
-- LinkedIn: [LinkedIn](https://www.linkedin.com/in/samwel-oliver/)
+- LinkedIn: [Samwel Oliver](https://www.linkedin.com/in/samwel-oliver/)
 - Email: oliversamwel33@gmail.com
 
 ---
@@ -723,4 +560,5 @@ Contributions are welcome! Here's how you can help:
 - **Open-Meteo API** for providing free air quality data
 - **Apache Kafka** community for excellent documentation
 - **Debezium** team for the CDC platform
-- All open-source contributors who make projects like this possible
+- All open-source contributors
+
