@@ -173,6 +173,23 @@ services:
       - air_quality_net
 
   # ---------------------------
+  # Debezium Connector Auto-Registration
+  # ---------------------------
+  connector-init:
+    image: curlimages/curl:latest
+    container_name: connector-init
+    depends_on:
+      - mongo-connector
+      - mongo
+    volumes:
+      - ./streaming/register-connector.sh:/register-connector.sh
+      - ./streaming/mongo_connector_config.json:/mongo_connector_config.json
+    command: sh /register-connector.sh
+    networks:
+      - air_quality_net
+    restart: "no"
+
+  # ---------------------------
   # Cassandra Consumer (CDC to Cassandra)
   # ---------------------------
   cassandra-consumer:
