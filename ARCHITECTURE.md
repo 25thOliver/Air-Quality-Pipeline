@@ -29,3 +29,31 @@ flowchart TD
     DBZ --> K2
     K2 -->|"consumer group: cassandra_consumer_group"| CC
     CC -->|"INSERT"| CASS
+
+
+---
+
+### 5. Code Explanation
+
+A few things worth understanding as you write this:
+
+- **The Mermaid diagram** reflects what the code *actually does*, not what you wish it did. The "Known Limitations" section is intentional — it is honest, and it signals to anyone reading the repo that you are aware of the issues and have a plan. This is a mark of engineering maturity.
+- **The data model section** shows the shape of data at each stage. This is important because the CDC envelope wraps the original document in a Debezium envelope — something that trips up many engineers.
+- **Technology Choices** is the start of architectural reasoning. A hiring manager reading this knows you can explain *why* you used Kafka, not just *that* you used it.
+
+---
+
+### 6. Verification
+
+After creating the file:
+
+```bash
+# Confirm file exists
+ls -la ARCHITECTURE.md
+
+# Confirm the Mermaid block is syntactically recognisable
+grep -c "mermaid" ARCHITECTURE.md
+# Expected: 1
+
+# Preview it on GitHub by pushing to your repo
+# GitHub will render the Mermaid diagram automatically
