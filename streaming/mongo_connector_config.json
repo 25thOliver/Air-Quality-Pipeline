@@ -1,0 +1,19 @@
+{
+  "name": "mongo-air-quality-connector",
+  "config": {
+    "connector.class": "io.debezium.connector.mongodb.MongoDbConnector",
+    "tasks.max": "1",
+
+    "mongodb.connection.string": "mongodb://airflow:airflow123@mongo:27017/air_quality_db?authSource=admin&replicaSet=rs0",
+
+    "topic.prefix": "mongo_cdc",
+    "database.include.list": "air_quality_db",
+    "collection.include.list": "air_quality_db.air_quality_raw",
+
+    "publish.full.document.only": "true",
+    "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "value.converter.schemas.enable": "false",
+    "key.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "key.converter.schemas.enable": "false"
+  }
+}
