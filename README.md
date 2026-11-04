@@ -148,7 +148,7 @@ cd air-quality-pipeline
 
 ### 2. Create Environment File
 ```bash
-cp .env
+cp .env.example .env
 ```
 
 **Edit `.env` if needed** (default values work out of the box):
@@ -173,11 +173,14 @@ OPEN_METEO_URL=https://air-quality-api.open-meteo.com/v1/air-quality
 ```
 
 ### 3. Create MongoDB Keyfile
+
 ```bash
 openssl rand -base64 756 > mongo-keyfile
 chmod 400 mongo-keyfile
-sudo chown 999:999 mongo-keyfile  # MongoDB user ID in Docker
+sudo chown 999:999 mongo-keyfile
 ```
+
+> ⚠️ **Security:** Do not commit `mongo-keyfile` to version control. It is a sensitive secret and is already excluded by `.gitignore`.
 
 ### 4. Start All Services
 ```bash
@@ -227,6 +230,16 @@ bash health-check.sh
 ![Health-check status](images/healthcheck.png)
 
 ---
+
+## Known Setup Notes
+
+The following manual steps are currently required after `docker-compose up`. These are tracked
+issues that will be resolved in future releases:
+
+- **Cassandra schema** must be applied manually:
+  ```bash
+  docker exec -i cassandra cqlsh < storage/cassandra_setup.cql
+
 
 ## Understanding the Data Flow
 
